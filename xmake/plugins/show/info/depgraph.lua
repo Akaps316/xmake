@@ -26,14 +26,22 @@ import("core.project.project")
 import("private.detect.check_targetname")
 
 function _collect_target_entry(target)
-    local deps = table.wrap(target:get("deps"))
+    local deps = {}
+    for _, dep in ipairs(target:deps()) do
+        table.insert(deps, dep:name())
+    end
+    local orderdeps = {}
+    for _, dep in ipairs(target:orderdeps()) do
+        table.insert(orderdeps, dep:name())
+    end
 
     return {
         name = target:name(),
         kind = target:kind(),
         group = target:get("group"),
         default = target:is_default(),
-        deps = deps
+        deps = deps,
+        orderdeps = orderdeps
     }
 end
 
@@ -103,7 +111,8 @@ function main(name)
 
     local root_target
     if name then
-        root_target = assert(check_targetname(name))
+        name = assert(check_targetname(name))
+        root_target = assert(project.target(name), "unknown target: " .. name)
     end
 
     local graph = _collect_target_graph(root_target)
